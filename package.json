@@ -1,0 +1,28 @@
+{
+	"name": "fastify-upload",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.ts",
+	"scripts": {
+		"dev": "nodemon --exec ts-node index.ts",
+		"build": "tsc -p tsconfig.json && prettier --write ./dist",
+		"start": "node ./dist/index.js"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@fastify/auth": "^3.0.2",
+		"@fastify/static": "^6.4.0",
+		"fastify": "^4.2.0",
+		"fastify-multer": "^2.0.3"
+	},
+	"devDependencies": {
+		"@fastify/swagger": "^7.4.1",
+		"@types/babel__core": "^7.1.19",
+		"@types/node": "^18.0.1",
+		"dotenv": "^16.0.1",
+		"nodemon": "^2.0.18",
+		"ts-node": "^10.8.2",
+		"typescript": "^4.7.4"
+	}
+}
