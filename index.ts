@@ -37,12 +37,15 @@ server.register(multer.contentParser).after(() => {
 					schema: {
 						consumes: ["multipart/form-data"],
 						body: {
-							content: {
-								type: "string"
-							},
-							media: {
-								type: "string",
-								format: "binary"
+							type: "object",
+							properties: {
+								content: {
+									type: "string"
+								},
+								media: {
+									type: "string",
+									format: "binary"
+								}
 							}
 						}
 					} as unknown as FastifySchema,
