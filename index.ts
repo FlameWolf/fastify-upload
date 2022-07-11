@@ -1,9 +1,9 @@
 "use strict";
 
-import fastify, { FastifyInstance, FastifyRequest, FastifyReply, RouteOptions, FastifyPluginOptions, HookHandlerDoneFunction } from "fastify";
-import { FastifySchema } from "fastify";
+import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions, HookHandlerDoneFunction } from "fastify";
 import multer, { memoryStorage } from "fastify-multer";
 import { File } from "fastify-multer/lib/interfaces";
+import fastifySwagger from "@fastify/swagger";
 
 const isProdEnv = process.env.NODE_ENV === "production";
 if (!isProdEnv) {
@@ -15,10 +15,10 @@ const uploadMediaFile = multer({
 	},
 	storage: memoryStorage()
 }).single("media");
-const server: FastifyInstance = fastify();
+const server: FastifyInstance = fastify({ logger: true });
 server.register(multer.contentParser).after(() => {
 	if (!isProdEnv) {
-		server.register(require("@fastify/swagger"), {
+		server.register(fastifySwagger, {
 			routePrefix: "/swagger",
 			exposeRoute: true,
 			openapi: {
@@ -48,7 +48,7 @@ server.register(multer.contentParser).after(() => {
 								}
 							}
 						}
-					} as unknown as FastifySchema,
+					},
 					preHandler: uploadMediaFile
 				},
 				(request: FastifyRequest, reply: FastifyReply) => {
@@ -68,8 +68,9 @@ server.register(multer.contentParser).after(() => {
 		{ prefix: "/posts" }
 	);
 });
-server.setErrorHandler((err: any, request: FastifyRequest, reply: FastifyReply) => {
+server.setErrorHandler((err: Error, request: FastifyRequest, reply: FastifyReply) => {
 	request.log.error(err.toString());
+	console.error(err.stack);
 	reply.status(reply.statusCode || 500).send(err);
 });
 server.listen(
