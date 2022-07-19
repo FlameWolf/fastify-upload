@@ -1,8 +1,7 @@
 "use strict";
 
-import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions, HookHandlerDoneFunction } from "fastify";
-import multer, { memoryStorage } from "fastify-multer";
-import fastifyMultipart from "@fastify/multipart";
+import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions, HookHandlerDoneFunction, preValidationHookHandler, preValidationAsyncHookHandler } from "fastify";
+import multer from "fastify-multer";
 import { File } from "fastify-multer/lib/interfaces";
 import fastifySwagger from "@fastify/swagger";
 
@@ -10,6 +9,12 @@ const isProdEnv = process.env.NODE_ENV === "production";
 if (!isProdEnv) {
 	require("dotenv").config();
 }
+const uploadMediaFile = multer({
+	limits: {
+		fileSize: 1024 * 1024 * 5
+	},
+	storage: multer.memoryStorage()
+}).single("media");
 const postCreateSchema = {
 	consumes: ["multipart/form-data"],
 	body: {
@@ -21,16 +26,18 @@ const postCreateSchema = {
 			media: {
 				type: "string",
 				format: "binary"
+			},
+			poll: {
+				type: "object",
+				properties: {
+					first: { type: "string" },
+					second: { type: "string" }
+				},
+				required: ["first", "second"]
 			}
 		}
 	}
 };
-const uploadMediaFile = multer({
-	limits: {
-		fileSize: 1024 * 1024 * 5
-	},
-	storage: memoryStorage()
-}).single("media");
 const server: FastifyInstance = fastify({ logger: true });
 if (!isProdEnv) {
 	server.register(fastifySwagger, {
@@ -44,57 +51,65 @@ if (!isProdEnv) {
 		}
 	});
 }
-/* CODE FOR FASTIFY-MULTER */
-server.register(multer.contentParser).after(() => {
-	server.register(
-		(instance: FastifyInstance, options: FastifyPluginOptions, next: HookHandlerDoneFunction) => {
-			instance.post(
-				"/create",
-				{
-					schema: postCreateSchema,
-					preHandler: uploadMediaFile
-				},
-				(request: FastifyRequest, reply: FastifyReply) => {
-					const content = (request.body as any).content as string;
-					const file = (request as any).file as File;
-					if (file) {
-						delete file.buffer;
-					}
-					reply.send({
-						content,
-						file: JSON.stringify(file) || "No file selected"
-					});
-				}
-			);
-			next();
-		},
-		{ prefix: "/posts" }
-	);
+server.get("/", async (request, reply) => {
+	reply.redirect("/swagger");
 });
-/* CODE FOR FASTIFY-MULTIPART WHICH ALSO GIVES THE SAME ERROR  */
-/* COMMENT OUT THE FASTIFY-MULTER BLOCK BEFORE UNCOMMENTING THE BELOW LINES */
-// server.register(fastifyMultipart).after(() => {
-// 	server.register(
-// 		(instance: FastifyInstance, options: FastifyPluginOptions, next: HookHandlerDoneFunction) => {
-// 			instance.post(
-// 				"/create",
-// 				{
-// 					schema: postCreateSchema
-// 				},
-// 				async (request: FastifyRequest, reply: FastifyReply) => {
-// 					const content = (request.body as any).content as string;
-// 					const file = await request.file();
-// 					reply.send({
-// 						content,
-// 						file: JSON.stringify(file) || "No file selected"
-// 					});
-// 				}
-// 			);
-// 			next();
-// 		},
-// 		{ prefix: "/posts" }
-// 	);
-// });
+server.register(multer.contentParser);
+server.register(
+	async (instance: FastifyInstance, options: FastifyPluginOptions) => {
+		/* Test file upload */
+		instance.post(
+			"/create",
+			{
+				preValidation: [uploadMediaFile],
+				schema: postCreateSchema
+			},
+			(request: FastifyRequest, reply: FastifyReply) => {
+				const content = (request.body as any).content as string;
+				const file = (request as any).file as File;
+				if (file) {
+					delete file.buffer;
+				}
+				reply.send({
+					content,
+					file: JSON.stringify(file) || "No file selected"
+				});
+			}
+		);
+		/* Test optional params */
+		instance.post(
+			"/test/:param1/:param2?",
+			{
+				schema: {
+					params: {
+						type: "object",
+						properties: {
+							param1: {
+								type: "string"
+							},
+							param2: {
+								anyOf: [
+									{
+										type: "string"
+									},
+									{
+										type: "null"
+									}
+								]
+							}
+						}
+					}
+				}
+			},
+			async (request: FastifyRequest, reply: FastifyReply) => {
+				reply.status(200).send({
+					requestParams: request.params
+				});
+			}
+		);
+	},
+	{ prefix: "/posts" }
+);
 server.setErrorHandler((err: Error, request: FastifyRequest, reply: FastifyReply) => {
 	request.log.error(err.toString());
 	console.error(err.stack);
