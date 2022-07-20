@@ -2,7 +2,7 @@
 
 import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
 import fastifySwagger from "@fastify/swagger";
-import formDataParser from "./plugins/form-data-parser";
+import formDataParser from "formzilla";
 
 const isProdEnv = process.env.NODE_ENV === "production";
 if (!isProdEnv) {
@@ -57,9 +57,8 @@ server.register(
 				schema: postCreateSchema
 			},
 			(request: FastifyRequest, reply: FastifyReply) => {
-				reply.send({
-					requestBody: JSON.stringify(request.body)
-				});
+				console.log(request.body);
+				reply.status(200).send();
 			}
 		);
 		/* Test optional params */
