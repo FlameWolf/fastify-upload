@@ -57,7 +57,6 @@ server.register(
 				schema: postCreateSchema
 			},
 			(request: FastifyRequest, reply: FastifyReply) => {
-				console.log((request.body as any).media);
 				reply.send({
 					requestBody: JSON.stringify(request.body)
 				});
