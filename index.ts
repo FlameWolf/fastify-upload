@@ -1,20 +1,13 @@
 "use strict";
 
-import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions, HookHandlerDoneFunction, preValidationHookHandler, preValidationAsyncHookHandler } from "fastify";
-import multer from "fastify-multer";
-import { File } from "fastify-multer/lib/interfaces";
+import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
 import fastifySwagger from "@fastify/swagger";
+import formDataParser from "./plugins/form-data-parser";
 
 const isProdEnv = process.env.NODE_ENV === "production";
 if (!isProdEnv) {
 	require("dotenv").config();
 }
-const uploadMediaFile = multer({
-	limits: {
-		fileSize: 1024 * 1024 * 5
-	},
-	storage: multer.memoryStorage()
-}).single("media");
 const postCreateSchema = {
 	consumes: ["multipart/form-data"],
 	body: {
@@ -54,25 +47,19 @@ if (!isProdEnv) {
 server.get("/", async (request, reply) => {
 	reply.redirect("/swagger");
 });
-server.register(multer.contentParser);
+server.register(formDataParser, { fileSize: 1024 * 1024 * 50 });
 server.register(
 	async (instance: FastifyInstance, options: FastifyPluginOptions) => {
 		/* Test file upload */
 		instance.post(
 			"/create",
 			{
-				preValidation: [uploadMediaFile],
 				schema: postCreateSchema
 			},
 			(request: FastifyRequest, reply: FastifyReply) => {
-				const content = (request.body as any).content as string;
-				const file = (request as any).file as File;
-				if (file) {
-					delete file.buffer;
-				}
+				console.log((request.body as any).media);
 				reply.send({
-					content,
-					file: JSON.stringify(file) || "No file selected"
+					requestBody: JSON.stringify(request.body)
 				});
 			}
 		);
