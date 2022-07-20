@@ -2,7 +2,7 @@
 
 import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
 import fastifySwagger from "@fastify/swagger";
-import formDataParser from "formzilla";
+import formDataParser from "./form-data-parser";
 
 const isProdEnv = process.env.NODE_ENV === "production";
 if (!isProdEnv) {
