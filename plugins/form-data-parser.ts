@@ -1,6 +1,6 @@
 "use strict";
 
-import { FastifyRequest, FastifyInstance, FastifyPluginOptions } from "fastify";
+import { FastifyInstance, FastifyPluginOptions } from "fastify";
 import busboy = require("busboy");
 import { Busboy, Limits, FileInfo } from "busboy";
 

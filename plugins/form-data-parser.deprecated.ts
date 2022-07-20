@@ -40,7 +40,7 @@ const formDataParser: FormDataParserPlugin & Dictionary = (instance: FastifyInst
 						requestBody[key] = parseFloat(value);
 						break;
 					case "integer":
-						if(isValueTypeString) {
+						if (isValueTypeString) {
 							requestBody[key] = parseInt(value);
 						}
 						break;
