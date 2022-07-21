@@ -7,7 +7,7 @@ import { Busboy, Limits, FileInfo } from "busboy";
 interface Dictionary extends Object {
 	[key: string | symbol]: any;
 }
-class RouteSchemaMap {
+class RouteSchemaMap extends Object {
 	[key: string]: Dictionary | undefined;
 }
 interface FormDataParserPluginOptions extends Limits, FastifyPluginOptions {}
