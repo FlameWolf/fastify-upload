@@ -1,11 +1,14 @@
 "use strict";
 
-import { FastifyPluginAsync, FastifyPluginOptions } from "fastify";
+import { FastifyPluginAsync, FastifyPluginOptions, FastifySchema } from "fastify";
 import busboy = require("busboy");
 import { Busboy, Limits, FileInfo } from "busboy";
 
 interface Dictionary extends Object {
 	[key: string | symbol]: any;
+}
+class RouteSchemaMap {
+	[key: string]: Dictionary | undefined;
 }
 interface FormDataParserPluginOptions extends Limits, FastifyPluginOptions {}
 type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
@@ -31,10 +34,12 @@ declare module "fastify" {
 }
 
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
+	const instanceSchemas = new RouteSchemaMap();
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
 		const fileList: Array<Dictionary> = [];
 		const bus = busboy({ headers: message.headers, limits: options });
 		const formData: Dictionary = {};
+		const schemaProps = (instanceSchemas[request.url] as Dictionary)?.properties;
 		bus.on("file", (fieldName: string, file: Busboy, fileInfo: FileInfo) => {
 			const chunks: Array<Uint8Array> = [];
 			const fileObject = new File(fileInfo);
@@ -47,11 +52,16 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 			});
 		});
 		bus.on("field", (fieldName, fieldValue) => {
-			try {
-				formData[fieldName] = JSON.parse(fieldValue);
-			} catch (err) {
-				formData[fieldName] = fieldValue;
+			if (schemaProps) {
+				const schemaType = schemaProps[fieldName]?.type;
+				if (schemaType !== "string") {
+					try {
+						formData[fieldName] = JSON.parse(fieldValue);
+						return;
+					} catch (err) {}
+				}
 			}
+			formData[fieldName] = fieldValue;
 		});
 		bus.on("close", () => {
 			request.__files__ = fileList;
@@ -61,6 +71,9 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 			done(error);
 		});
 		message.pipe(bus);
+	});
+	instance.addHook("onRoute", async routeOptions => {
+		instanceSchemas[routeOptions.url] = routeOptions.schema?.body as Dictionary;
 	});
 	instance.addHook("preHandler", async (request, reply) => {
 		const requestBody = request.body as Dictionary;
