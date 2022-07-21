@@ -13,7 +13,7 @@ class RouteSchemaMap extends Object {
 interface FormDataParserPluginOptions extends Limits, FastifyPluginOptions {}
 type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
 class File {
-	fieldName!: string;
+	fieldName?: string;
 	fileName!: string;
 	encoding!: string;
 	mimeType!: string;
@@ -29,14 +29,14 @@ class File {
 }
 declare module "fastify" {
 	interface FastifyRequest {
-		__files__?: Array<Dictionary>;
+		__files__?: Array<File>;
 	}
 }
 
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	const instanceSchemas = new RouteSchemaMap();
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
-		const fileList: Array<Dictionary> = [];
+		const fileList: Array<File> = [];
 		const formData: Dictionary = {};
 		const schemaProps = (instanceSchemas[request.url] as Dictionary)?.properties;
 		const bus = busboy({ headers: message.headers, limits: options });
@@ -77,12 +77,11 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	});
 	instance.addHook("preHandler", async (request, reply) => {
 		const requestBody = request.body as Dictionary;
-		const requestFiles = request.__files__ as Array<Dictionary>;
+		const requestFiles = request.__files__ as Array<File>;
 		if (requestFiles?.length) {
 			for (const fileObject of requestFiles) {
-				const fieldName = fileObject.fieldName;
+				const fieldName = fileObject.fieldName as string;
 				delete fileObject.fieldName;
-				delete requestBody.fieldName;
 				requestBody[fieldName] = fileObject;
 			}
 		}
