@@ -37,9 +37,9 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	const instanceSchemas = new RouteSchemaMap();
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
 		const fileList: Array<Dictionary> = [];
-		const bus = busboy({ headers: message.headers, limits: options });
 		const formData: Dictionary = {};
 		const schemaProps = (instanceSchemas[request.url] as Dictionary)?.properties;
+		const bus = busboy({ headers: message.headers, limits: options });
 		bus.on("file", (fieldName: string, file: Busboy, fileInfo: FileInfo) => {
 			const chunks: Array<Uint8Array> = [];
 			const fileObject = new File(fileInfo);
