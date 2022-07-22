@@ -34,11 +34,11 @@ declare module "fastify" {
 }
 
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
-	const instanceSchemas = new RouteSchemaMap();
+	const routeSchemas = new RouteSchemaMap();
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
 		const fileList: Array<File> = [];
 		const formData: Dictionary = {};
-		const schemaProps = (instanceSchemas[request.url] as Dictionary)?.properties;
+		const schemaProps = (routeSchemas[request.url] as Dictionary)?.properties;
 		const bus = busboy({ headers: message.headers, limits: options });
 		bus.on("file", (fieldName: string, file: Busboy, fileInfo: FileInfo) => {
 			const chunks: Array<Uint8Array> = [];
@@ -73,7 +73,7 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 		message.pipe(bus);
 	});
 	instance.addHook("onRoute", async routeOptions => {
-		instanceSchemas[routeOptions.url] = routeOptions.schema?.body as Dictionary;
+		routeSchemas[routeOptions.url] = routeOptions.schema?.body as Dictionary;
 	});
 	instance.addHook("preHandler", async (request, reply) => {
 		const requestBody = request.body as Dictionary;
