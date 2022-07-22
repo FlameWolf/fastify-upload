@@ -7,9 +7,6 @@ import { Busboy, Limits, FileInfo } from "busboy";
 interface Dictionary extends Object {
 	[key: string | symbol]: any;
 }
-class RouteSchemaMap extends Object {
-	[key: string]: Dictionary | undefined;
-}
 interface FormDataParserPluginOptions extends Limits, FastifyPluginOptions {}
 type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
 class File {
@@ -34,11 +31,10 @@ declare module "fastify" {
 }
 
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
-	const routeSchemas = new RouteSchemaMap();
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
 		const fileList: Array<File> = [];
 		const formData: Dictionary = {};
-		const schemaProps = (routeSchemas[request.url] as Dictionary)?.properties;
+		const schemaProps = (request.context as Dictionary).schema?.body?.properties;
 		const bus = busboy({ headers: message.headers, limits: options });
 		bus.on("file", (fieldName: string, file: Busboy, fileInfo: FileInfo) => {
 			const chunks: Array<Uint8Array> = [];
@@ -71,9 +67,6 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 			done(error);
 		});
 		message.pipe(bus);
-	});
-	instance.addHook("onRoute", async routeOptions => {
-		routeSchemas[routeOptions.url] = routeOptions.schema?.body as Dictionary;
 	});
 	instance.addHook("preHandler", async (request, reply) => {
 		const requestBody = request.body as Dictionary;
