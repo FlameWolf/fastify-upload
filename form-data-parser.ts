@@ -11,16 +11,16 @@ interface Dictionary extends Object {
 export interface FormDataParserPluginOptions extends Limits, FastifyPluginOptions {}
 export type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
 export class File {
-	fieldName?: string;
-	fileName!: string;
+	field?: string;
+	name!: string;
 	encoding!: string;
 	mimeType!: string;
 	data!: Buffer;
 
 	constructor(name?: string, info?: FileInfo) {
-		this.fieldName = name;
+		this.field = name;
 		if (info) {
-			this.fileName = info.filename;
+			this.name = info.filename;
 			this.encoding = info.encoding;
 			this.mimeType = info.mimeType;
 		}
@@ -71,9 +71,9 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 		const files = request.__files__ as Array<File>;
 		if (files?.length) {
 			for (const fileObject of files) {
-				const fieldName = fileObject.fieldName as string;
-				delete fileObject.fieldName;
-				body[fieldName] = fileObject;
+				const field = fileObject.field as string;
+				delete fileObject.field;
+				body[field] = fileObject;
 			}
 		}
 		delete request.__files__;
