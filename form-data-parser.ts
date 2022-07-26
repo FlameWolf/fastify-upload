@@ -10,7 +10,7 @@ interface Dictionary extends Object {
 }
 export interface FormDataParserPluginOptions extends Limits, FastifyPluginOptions {}
 export type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
-export class FileField {
+export class File {
 	fieldName?: string;
 	fileName!: string;
 	encoding!: string;
@@ -28,19 +28,19 @@ export class FileField {
 }
 declare module "fastify" {
 	interface FastifyRequest {
-		__files__?: Array<FileField>;
+		__files__?: Array<File>;
 	}
 }
 
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
-		const files: Array<FileField> = [];
+		const files: Array<File> = [];
 		const body: Dictionary = {};
 		const props = (request.context as Dictionary).schema?.body?.properties;
 		const bus = busboy({ headers: message.headers, limits: options });
 		bus.on("file", (name: string, stream: Readable, info: FileInfo) => {
 			const data: Array<Uint8Array> = [];
-			const file = new FileField(name, info);
+			const file = new File(name, info);
 			stream.on("data", chunk => data.push(chunk));
 			stream.on("close", () => {
 				file.data = Buffer.concat(data);
@@ -68,7 +68,7 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	});
 	instance.addHook("preHandler", async (request, reply) => {
 		const body = request.body as Dictionary;
-		const files = request.__files__ as Array<FileField>;
+		const files = request.__files__ as Array<File>;
 		if (files?.length) {
 			for (const fileObject of files) {
 				const fieldName = fileObject.fieldName as string;
