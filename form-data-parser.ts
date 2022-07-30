@@ -43,7 +43,7 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 		const props = (request.context as Dictionary).schema?.body?.properties;
 		const bus = busboy({ headers: message.headers, limits: options?.limits });
 		bus.on("file", (name: string, stream: Readable, info: FileInfo) => {
-			files.push(options.storage.process(name, stream, info));
+			files.push((options.storage || new StreamStorage()).process(name, stream, info));
 			body[name] = JSON.stringify(info);
 		});
 		bus.on("field", (name, value) => {

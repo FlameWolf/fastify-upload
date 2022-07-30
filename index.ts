@@ -51,16 +51,7 @@ if (!isProdEnv) {
 server.get("/", async (request, reply) => {
 	reply.redirect("/swagger");
 });
-server.register(formDataParser, {
-	storage: new CallbackStorage(stream => {
-		stream.on("data", chunk => {
-			console.log(chunk);
-		});
-		stream.on("close", () => {
-			console.log("close");
-		});
-	})
-});
+server.register(formDataParser);
 server.register(
 	async (instance: FastifyInstance, options: FastifyPluginOptions) => {
 		/* Test file upload */
