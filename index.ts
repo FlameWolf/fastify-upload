@@ -3,6 +3,10 @@
 import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import formDataParser from "./form-data-parser";
+import { BufferStorage } from "./BufferStorage";
+import { StreamStorage } from "./StreamStorage";
+import { DiscStorage } from "./DiscStorage";
+import { CallbackStorage } from "./CallbackStorage";
 
 const isProdEnv = process.env.NODE_ENV === "production";
 if (!isProdEnv) {
@@ -48,15 +52,14 @@ server.get("/", async (request, reply) => {
 	reply.redirect("/swagger");
 });
 server.register(formDataParser, {
-	storage: "stream",
-	callback: stream => {
+	storage: new CallbackStorage(stream => {
 		stream.on("data", chunk => {
 			console.log(chunk);
 		});
 		stream.on("close", () => {
-			console.log("end");
+			console.log("close");
 		});
-	}
+	})
 });
 server.register(
 	async (instance: FastifyInstance, options: FastifyPluginOptions) => {
