@@ -16,9 +16,9 @@ export interface FileSaveTarget {
 	directory?: string;
 	fileName?: string;
 }
-export interface FormDataParserPluginOptions<StorageOptionType extends StorageOption = StreamStorage> extends FastifyPluginOptions {
+export interface FormDataParserPluginOptions extends FastifyPluginOptions {
 	limits?: Limits;
-	storage: StorageOptionType;
+	storage: StorageOption;
 }
 export interface File {
 	field: string | undefined;
