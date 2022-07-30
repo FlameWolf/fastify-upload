@@ -2,29 +2,27 @@
 
 import { FastifyPluginAsync, FastifyPluginOptions } from "fastify";
 import { Limits, FileInfo } from "busboy";
-import { PassThrough, Readable, Transform } from "stream";
-import busboy = require("busboy");
-import os = require("os");
-import fs = require("fs");
-
-import * as path from "path";
+import { Readable } from "stream";
+import { StreamStorage } from "./StreamStorage";
+import * as busboy from "busboy";
 
 interface Dictionary extends Object {
 	[key: string | symbol]: any;
+}
+export interface StorageOption {
+	process: (name: string, stream: Readable, info: FileInfo) => File;
 }
 export interface FileSaveTarget {
 	directory?: string;
 	fileName?: string;
 }
-export interface FormDataParserPluginOptions extends FastifyPluginOptions {
+export interface FormDataParserPluginOptions<StorageOptionType extends StorageOption = StreamStorage> extends FastifyPluginOptions {
 	limits?: Limits;
-	storage?: "disc" | "stream" | "buffer" | "callback";
-	location?: FileSaveTarget | ((source: File) => FileSaveTarget);
-	callback?: (sourceStream: Readable) => any;
+	storage: StorageOptionType;
 }
 export interface File {
 	field: string | undefined;
-	name: string;
+	originalName: string;
 	encoding: string;
 	mimeType: string;
 	path: string | undefined;
@@ -32,23 +30,6 @@ export interface File {
 	data: Buffer | undefined;
 }
 export type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
-class FileInternal implements File {
-	field: string | undefined;
-	name!: string;
-	encoding!: string;
-	mimeType!: string;
-	path: string | undefined;
-	stream: Readable | undefined;
-	data: Buffer | undefined;
-	constructor(name?: string, info?: FileInfo) {
-		this.field = name;
-		if (info) {
-			this.name = info.filename;
-			this.encoding = info.encoding;
-			this.mimeType = info.mimeType;
-		}
-	}
-}
 declare module "fastify" {
 	interface FastifyRequest {
 		__files__?: Array<File>;
@@ -62,43 +43,7 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 		const props = (request.context as Dictionary).schema?.body?.properties;
 		const bus = busboy({ headers: message.headers, limits: options?.limits });
 		bus.on("file", (name: string, stream: Readable, info: FileInfo) => {
-			const file = new FileInternal(name, info);
-			switch (options.storage) {
-				case "disc":
-					const locationOption = options.location;
-					const location = typeof locationOption === "function" ? locationOption(file) : locationOption;
-					const filePath = path.join(location?.directory || os.tmpdir(), location?.fileName || file.name);
-					const fileStream = fs.createWriteStream(filePath);
-					stream.pipe(fileStream);
-					stream.on("close", () => {
-						file.path = filePath;
-					});
-					break;
-				case "stream":
-					const delegateStream = new PassThrough();
-					stream.on("data", chunk => delegateStream.push(chunk));
-					stream.on("close", () => {
-						file.stream = delegateStream;
-					});
-					break;
-				case "buffer":
-					const data: Array<Uint8Array> = [];
-					stream.on("data", chunk => data.push(chunk));
-					stream.on("close", () => {
-						file.data = Buffer.concat(data);
-					});
-					break;
-				case "callback":
-					const transformStream = new Transform({
-						transform: function (chunk, encoding, callback) {
-							this.push(chunk);
-							callback();
-						}
-					});
-					options.callback?.(stream.pipe(transformStream));
-					break;
-			}
-			files.push(file);
+			files.push(options.storage.process(name, stream, info));
 			body[name] = JSON.stringify(info);
 		});
 		bus.on("field", (name, value) => {
