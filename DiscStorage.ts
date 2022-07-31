@@ -1,8 +1,8 @@
 "use strict";
 
-import { FileInfo } from "busboy";
+import { FileSaveTarget, File, StorageOption } from "./lib/types";
 import { Readable } from "stream";
-import { File, StorageOption, FileSaveTarget } from "./form-data-parser";
+import { FileInfo } from "busboy";
 import { FileInternal } from "./FileInternal";
 import * as os from "os";
 import * as fs from "fs";

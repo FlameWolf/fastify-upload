@@ -2,7 +2,7 @@
 
 import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
 import fastifySwagger from "@fastify/swagger";
-import formDataParser from "./form-data-parser";
+import formDataParser from "./index";
 import { BufferStorage } from "./BufferStorage";
 import { StreamStorage } from "./StreamStorage";
 import { DiscStorage } from "./DiscStorage";

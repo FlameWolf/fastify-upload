@@ -1,8 +1,8 @@
 "use strict";
 
-import { FileInfo } from "busboy";
+import { File } from "./lib/types";
 import { Readable } from "stream";
-import { File } from "./form-data-parser";
+import { FileInfo } from "busboy";
 
 export class FileInternal implements File {
 	field: string | undefined;

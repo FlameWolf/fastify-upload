@@ -1,40 +1,9 @@
 "use strict";
 
-import { FastifyPluginAsync, FastifyPluginOptions } from "fastify";
-import { Limits, FileInfo } from "busboy";
+import { FormDataParserPlugin, File, Dictionary } from "./lib/types";
 import { Readable } from "stream";
 import { StreamStorage } from "./StreamStorage";
 import * as busboy from "busboy";
-
-interface Dictionary extends Object {
-	[key: string | symbol]: any;
-}
-export interface StorageOption {
-	process: (name: string, stream: Readable, info: FileInfo) => File;
-}
-export interface FileSaveTarget {
-	directory?: string;
-	fileName?: string;
-}
-export interface FormDataParserPluginOptions extends FastifyPluginOptions {
-	limits?: Limits;
-	storage: StorageOption;
-}
-export interface File {
-	field: string | undefined;
-	originalName: string;
-	encoding: string;
-	mimeType: string;
-	path: string | undefined;
-	stream: Readable | undefined;
-	data: Buffer | undefined;
-}
-export type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
-declare module "fastify" {
-	interface FastifyRequest {
-		__files__?: Array<File>;
-	}
-}
 
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
@@ -42,7 +11,7 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 		const body: Dictionary = {};
 		const props = (request.context as Dictionary).schema?.body?.properties;
 		const bus = busboy({ headers: message.headers, limits: options?.limits });
-		bus.on("file", (name: string, stream: Readable, info: FileInfo) => {
+		bus.on("file", (name: string, stream: Readable, info: busboy.FileInfo) => {
 			files.push((options.storage || new StreamStorage()).process(name, stream, info));
 			body[name] = JSON.stringify(info);
 		});

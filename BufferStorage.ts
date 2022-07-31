@@ -1,9 +1,9 @@
 "use strict";
 
-import { FileInfo } from "busboy";
+import { StorageOption } from "./lib/types";
 import { Readable } from "stream";
+import { FileInfo } from "busboy";
 import { FileInternal } from "./FileInternal";
-import { StorageOption } from "./form-data-parser";
 
 export class BufferStorage implements StorageOption {
 	process(name: string, stream: Readable, info: FileInfo) {
