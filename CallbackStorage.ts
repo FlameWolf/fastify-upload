@@ -1,8 +1,8 @@
 "use strict";
 
 import { Readable } from "stream";
-import { File, StorageOption } from "./lib/types";
 import { FileInfo } from "busboy";
+import { File, StorageOption } from "./index";
 
 type CallbackType = (name: string, stream: Readable, info: FileInfo) => File;
 

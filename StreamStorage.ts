@@ -1,6 +1,6 @@
 "use strict";
 
-import { StorageOption } from "./lib/types";
+import { StorageOption } from "./index";
 import { Readable, PassThrough } from "stream";
 import { FileInfo } from "busboy";
 import { FileInternal } from "./FileInternal";

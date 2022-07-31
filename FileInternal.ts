@@ -1,6 +1,6 @@
 "use strict";
 
-import { File } from "./lib/types";
+import { File } from "./index";
 import { Readable } from "stream";
 import { FileInfo } from "busboy";
 

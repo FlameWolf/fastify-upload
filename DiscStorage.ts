@@ -1,12 +1,12 @@
 "use strict";
 
-import { FileSaveTarget, File, StorageOption } from "./lib/types";
+import { FileSaveTarget, File, StorageOption } from "./index";
 import { Readable } from "stream";
 import { FileInfo } from "busboy";
 import { FileInternal } from "./FileInternal";
+import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
-import * as path from "path";
 
 type TargetType = FileSaveTarget | ((source: File) => FileSaveTarget);
 

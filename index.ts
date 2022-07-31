@@ -1,9 +1,40 @@
 "use strict";
 
-import { FormDataParserPlugin, File, Dictionary } from "./lib/types";
 import { Readable } from "stream";
-import { StreamStorage } from "./StreamStorage";
+import { FileInfo, Limits } from "busboy";
+import { FastifyPluginOptions, FastifyPluginAsync } from "fastify";
 import * as busboy from "busboy";
+import { StreamStorage } from "./StreamStorage";
+
+export interface Dictionary extends Object {
+	[key: string | symbol]: any;
+}
+export interface File {
+	field: string | undefined;
+	originalName: string;
+	encoding: string;
+	mimeType: string;
+	path: string | undefined;
+	stream: Readable | undefined;
+	data: Buffer | undefined;
+}
+export interface StorageOption {
+	process: (name: string, stream: Readable, info: FileInfo) => File;
+}
+export interface FileSaveTarget {
+	directory?: string;
+	fileName?: string;
+}
+export interface FormDataParserPluginOptions extends FastifyPluginOptions {
+	limits?: Limits;
+	storage?: StorageOption;
+}
+export type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
+declare module "fastify" {
+	interface FastifyRequest {
+		__files__?: Array<File>;
+	}
+}
 
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
