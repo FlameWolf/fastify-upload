@@ -1,11 +1,10 @@
 "use strict";
 
-import { FileInfo } from "busboy";
 import { Readable } from "stream";
-import { FileInternal } from "./FileInternal";
-import { StorageOption } from "./form-data-parser";
+import { File, StorageOption } from "./lib/types";
+import { FileInfo } from "busboy";
 
-type CallbackType = (source: Readable) => any;
+type CallbackType = (name: string, stream: Readable, info: FileInfo) => File;
 
 export class CallbackStorage implements StorageOption {
 	callback: CallbackType;
@@ -13,7 +12,6 @@ export class CallbackStorage implements StorageOption {
 		this.callback = callback;
 	}
 	process(name: string, stream: Readable, info: FileInfo) {
-		this.callback(stream);
-		return new FileInternal(name, info);
+		return this.callback(name, stream, info);
 	}
 }
