@@ -1,119 +1,82 @@
 "use strict";
 
-import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
-import fastifySwagger from "@fastify/swagger";
-import formDataParser from "./form-data-parser";
-import { BufferStorage } from "./BufferStorage";
+import { FastifyPluginAsync, FastifyPluginOptions } from "fastify";
+import { Limits, FileInfo } from "busboy";
+import { Readable } from "stream";
 import { StreamStorage } from "./StreamStorage";
-import { DiscStorage } from "./DiscStorage";
-import { CallbackStorage } from "./CallbackStorage";
+import * as busboy from "busboy";
 
-const isProdEnv = process.env.NODE_ENV === "production";
-if (!isProdEnv) {
-	require("dotenv").config();
+interface Dictionary extends Object {
+	[key: string | symbol]: any;
 }
-const postCreateSchema = {
-	consumes: ["multipart/form-data"],
-	body: {
-		type: "object",
-		properties: {
-			content: {
-				type: "string"
-			},
-			media: {
-				type: "string",
-				format: "binary"
-			},
-			poll: {
-				type: "object",
-				properties: {
-					first: { type: "string" },
-					second: { type: "string" }
-				},
-				required: ["first", "second"]
-			}
-		}
+export interface StorageOption {
+	process: (name: string, stream: Readable, info: FileInfo) => File;
+}
+export interface FileSaveTarget {
+	directory?: string;
+	fileName?: string;
+}
+export interface FormDataParserPluginOptions extends FastifyPluginOptions {
+	limits?: Limits;
+	storage: StorageOption;
+}
+export interface File {
+	field: string | undefined;
+	originalName: string;
+	encoding: string;
+	mimeType: string;
+	path: string | undefined;
+	stream: Readable | undefined;
+	data: Buffer | undefined;
+}
+export type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
+declare module "fastify" {
+	interface FastifyRequest {
+		__files__?: Array<File>;
 	}
-};
-const server: FastifyInstance = fastify({ logger: true });
-if (!isProdEnv) {
-	server.register(fastifySwagger, {
-		routePrefix: "/swagger",
-		exposeRoute: true,
-		openapi: {
-			info: {
-				title: "Fastify Upload",
-				version: "1.0.0"
+}
+
+const formDataParser: FormDataParserPlugin = async (instance, options) => {
+	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
+		const files: Array<File> = [];
+		const body: Dictionary = {};
+		const props = (request.context as Dictionary).schema?.body?.properties;
+		const bus = busboy({ headers: message.headers, limits: options?.limits });
+		bus.on("file", (name: string, stream: Readable, info: FileInfo) => {
+			files.push((options.storage || new StreamStorage()).process(name, stream, info));
+			body[name] = JSON.stringify(info);
+		});
+		bus.on("field", (name, value) => {
+			if (props && props[name]?.type !== "string") {
+				try {
+					body[name] = JSON.parse(value);
+					return;
+				} catch (err) {}
 			}
-		}
+			body[name] = value;
+		});
+		bus.on("close", () => {
+			request.__files__ = files;
+			done(null, body);
+		});
+		bus.on("error", (error: Error) => {
+			done(error);
+		});
+		message.pipe(bus);
 	});
-}
-server.get("/", async (request, reply) => {
-	reply.redirect("/swagger");
-});
-server.register(formDataParser);
-server.register(
-	async (instance: FastifyInstance, options: FastifyPluginOptions) => {
-		/* Test file upload */
-		instance.post(
-			"/create",
-			{
-				schema: postCreateSchema
-			},
-			(request: FastifyRequest, reply: FastifyReply) => {
-				console.log(request.body);
-				reply.status(200).send();
+	instance.addHook("preHandler", async (request, reply) => {
+		const body = request.body as Dictionary;
+		const files = request.__files__ as Array<File>;
+		if (files?.length) {
+			for (const fileObject of files) {
+				const field = fileObject.field as string;
+				delete fileObject.field;
+				body[field] = fileObject;
 			}
-		);
-		/* Test optional params */
-		instance.post(
-			"/test/:param1/:param2?",
-			{
-				schema: {
-					params: {
-						type: "object",
-						properties: {
-							param1: {
-								type: "string"
-							},
-							param2: {
-								anyOf: [
-									{
-										type: "string"
-									},
-									{
-										type: "null"
-									}
-								]
-							}
-						}
-					}
-				}
-			},
-			async (request: FastifyRequest, reply: FastifyReply) => {
-				reply.status(200).send({
-					requestParams: request.params
-				});
-			}
-		);
-	},
-	{ prefix: "/posts" }
-);
-server.setErrorHandler((err: Error, request: FastifyRequest, reply: FastifyReply) => {
-	request.log.error(err.toString());
-	console.error(err.stack);
-	reply.status(reply.statusCode || 500).send(err);
-});
-server.listen(
-	{
-		port: +(process.env.PORT || "3072"),
-		host: process.env.HOST || "127.0.0.1"
-	},
-	(err, address) => {
-		if (err) {
-			console.log(err.message);
-			process.exit(1);
 		}
-		console.log(`Listening on ${address}`);
-	}
-);
+		delete request.__files__;
+	});
+};
+formDataParser[Symbol.for("skip-override")] = true;
+
+export default formDataParser;
