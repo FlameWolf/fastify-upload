@@ -2,11 +2,12 @@
 
 import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
 import fastifySwagger from "@fastify/swagger";
-import formDataParser from "./index";
+import formDataParser, { Dictionary } from "./index";
 import { BufferStorage } from "./BufferStorage";
 import { StreamStorage } from "./StreamStorage";
 import { DiscStorage } from "./DiscStorage";
 import { CallbackStorage } from "./CallbackStorage";
+import Ajv from "ajv/dist/jtd";
 
 const isProdEnv = process.env.NODE_ENV === "production";
 if (!isProdEnv) {
@@ -63,6 +64,21 @@ server.register(
 			(request: FastifyRequest, reply: FastifyReply) => {
 				console.log(request.body);
 				reply.status(200).send();
+			}
+		);
+		/* Test AJV */
+		instance.post(
+			"/ajv",
+			{
+				schema: postCreateSchema
+			},
+			async (request, reply) => {
+				const body = request.body as Dictionary;
+				body.media = `{ "data": undefined }`;
+				const ajv = new Ajv({ strictSchema: false, validateSchema: false });
+				const parse = ajv.compileParser(postCreateSchema.body);
+				const parsed = parse(JSON.stringify(body));
+				reply.status(200).send(parsed);
 			}
 		);
 		/* Test optional params */
