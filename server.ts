@@ -75,7 +75,7 @@ server.register(
 			async (request, reply) => {
 				const body = request.body as Dictionary;
 				body.media = `{ "data": undefined }`;
-				const ajv = new Ajv({ strictSchema: false, validateSchema: false });
+				const ajv = new Ajv({ validateSchema: false });
 				const parse = ajv.compileParser(postCreateSchema.body);
 				const parsed = parse(JSON.stringify(body));
 				reply.status(200).send(parsed);
@@ -122,7 +122,7 @@ server.setErrorHandler((err: Error, request: FastifyRequest, reply: FastifyReply
 });
 server.listen(
 	{
-		port: +(process.env.PORT || "3072"),
+		port: +(process.env.PORT || "2048"),
 		host: process.env.HOST || "127.0.0.1"
 	},
 	(err, address) => {
