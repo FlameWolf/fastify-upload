@@ -30,30 +30,33 @@ export interface FormDataParserPluginOptions extends FastifyPluginOptions {
 	storage?: StorageOption;
 }
 export type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
+export type FieldParser = (name: string, value: string) => string;
 declare module "fastify" {
 	interface FastifyRequest {
 		__files__?: Array<File>;
 	}
 }
 
+const tryParse = (value: string) => {
+	try {
+		return JSON.parse(value);
+	} catch {
+		return value;
+	}
+};
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
 		const files: Array<File> = [];
 		const body: Dictionary = {};
 		const props = (request.context as Dictionary).schema?.body?.properties;
+		const parseField: FieldParser = props ? (name, value) => (props[name]?.type === "string" ? value : tryParse(value)) : (name, value) => value;
 		const bus = busboy({ headers: message.headers, limits: options?.limits });
 		bus.on("file", (name: string, stream: Readable, info: busboy.FileInfo) => {
 			files.push((options.storage || new StreamStorage()).process(name, stream, info));
 			body[name] = JSON.stringify(info);
 		});
 		bus.on("field", (name, value) => {
-			if (props && props[name]?.type !== "string") {
-				try {
-					body[name] = JSON.parse(value);
-					return;
-				} catch (err) {}
-			}
-			body[name] = value;
+			body[name] = parseField(name, value);
 		});
 		bus.on("close", () => {
 			request.__files__ = files;
