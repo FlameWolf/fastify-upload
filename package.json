@@ -15,7 +15,7 @@
 		"@fastify/multipart": "^7.1.0",
 		"@fastify/static": "^6.5.0",
 		"busboy": "^1.6.0",
-		"fastify": "^4.4.0",
+		"fastify": "^4.5.1",
 		"fastify-multer": "^2.0.3",
 		"formzilla": "^2.2.0"
 	},
@@ -23,7 +23,7 @@
 		"@fastify/swagger": "^7.4.1",
 		"@types/babel__core": "^7.1.19",
 		"@types/busboy": "^1.5.0",
-		"@types/node": "^18.7.4",
+		"@types/node": "^18.7.6",
 		"dotenv": "^16.0.1",
 		"nodemon": "^2.0.19",
 		"ts-node": "^10.9.1",
