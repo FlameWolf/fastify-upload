@@ -18,8 +18,9 @@ export interface File {
 	stream: Readable | undefined;
 	data: Buffer | undefined;
 }
+export type FileHandler = (name: string, stream: Readable, info: FileInfo) => File | Promise<File>;
 export interface StorageOption {
-	process: (name: string, stream: Readable, info: FileInfo) => File;
+	process: FileHandler;
 }
 export interface FileSaveTarget {
 	directory?: string;
@@ -47,21 +48,23 @@ const tryParse = (value: string) => {
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	const { limits, storage = new StreamStorage() } = options;
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
-		const files: Array<File> = [];
+		const results: Array<Promise<File>> = [];
 		const body: Dictionary = {};
 		const props = (request.context as Dictionary).schema?.body?.properties;
 		const parseField: FieldParser = props ? (name, value) => (props[name]?.type === "string" ? value : tryParse(value)) : (name, value) => value;
 		const bus = busboy({ headers: message.headers, limits });
 		bus.on("file", (name: string, stream: Readable, info: busboy.FileInfo) => {
-			files.push(storage.process(name, stream, info));
+			results.push(Promise.resolve(storage.process(name, stream, info)));
 			body[name] = JSON.stringify(info);
 		});
 		bus.on("field", (name, value) => {
 			body[name] = parseField(name, value);
 		});
 		bus.on("close", () => {
-			request.__files__ = files;
-			done(null, body);
+			Promise.all(results).then(files => {
+				request.__files__ = files;
+				done(null, body);
+			});
 		});
 		bus.on("error", (error: Error) => {
 			done(error);

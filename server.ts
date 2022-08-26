@@ -2,17 +2,23 @@
 
 import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
 import fastifySwagger from "@fastify/swagger";
-import formDataParser, { Dictionary } from "./index";
+import formDataParser from "./index";
+import cloudinary = require("cloudinary");
+import { FileInternal } from "./FileInternal";
 import { BufferStorage } from "./BufferStorage";
 import { StreamStorage } from "./StreamStorage";
 import { DiscStorage } from "./DiscStorage";
 import { CallbackStorage } from "./CallbackStorage";
-import Ajv from "ajv/dist/jtd";
 
 const isProdEnv = process.env.NODE_ENV === "production";
 if (!isProdEnv) {
 	require("dotenv").config();
 }
+cloudinary.v2.config({
+	cloud_name: process.env.CLOUD_BUCKET,
+	api_key: process.env.CLOUD_API_KEY,
+	api_secret: process.env.CLOUD_API_SECRET
+});
 const postCreateSchema = {
 	consumes: ["multipart/form-data"],
 	body: {
@@ -52,64 +58,30 @@ if (!isProdEnv) {
 server.get("/", async (request, reply) => {
 	reply.redirect("/swagger");
 });
-server.register(formDataParser);
+server.register(formDataParser, {
+	storage: new CallbackStorage((name, stream, info) => {
+		return new Promise((resolve, reject) => {
+			const file = new FileInternal(name, info);
+			var uploader = cloudinary.v2.uploader.upload_stream((err, res) => {
+				if (err) {
+					reject(err);
+				}
+				file.path = res?.secure_url;
+				resolve(file);
+			});
+			stream.pipe(uploader);
+		});
+	})
+});
 server.register(
 	async (instance: FastifyInstance, options: FastifyPluginOptions) => {
-		/* Test file upload */
 		instance.post(
 			"/create",
 			{
 				schema: postCreateSchema
 			},
 			(request: FastifyRequest, reply: FastifyReply) => {
-				console.log(request.body);
-				reply.status(200).send();
-			}
-		);
-		/* Test AJV */
-		instance.post(
-			"/ajv",
-			{
-				schema: postCreateSchema
-			},
-			async (request, reply) => {
-				const body = request.body as Dictionary;
-				body.media = `{ "data": undefined }`;
-				const ajv = new Ajv({ validateSchema: false });
-				const parse = ajv.compileParser(postCreateSchema.body);
-				const parsed = parse(JSON.stringify(body));
-				reply.status(200).send(parsed);
-			}
-		);
-		/* Test optional params */
-		instance.post(
-			"/test/:param1/:param2?",
-			{
-				schema: {
-					params: {
-						type: "object",
-						properties: {
-							param1: {
-								type: "string"
-							},
-							param2: {
-								anyOf: [
-									{
-										type: "string"
-									},
-									{
-										type: "null"
-									}
-								]
-							}
-						}
-					}
-				}
-			},
-			async (request: FastifyRequest, reply: FastifyReply) => {
-				reply.status(200).send({
-					requestParams: request.params
-				});
+				reply.status(200).send(request.body);
 			}
 		);
 	},

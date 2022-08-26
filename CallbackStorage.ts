@@ -2,13 +2,11 @@
 
 import { Readable } from "stream";
 import { FileInfo } from "busboy";
-import { File, StorageOption } from "./index";
-
-type CallbackType = (name: string, stream: Readable, info: FileInfo) => File;
+import { FileHandler, StorageOption } from "./index";
 
 export class CallbackStorage implements StorageOption {
-	callback: CallbackType;
-	constructor(callback: CallbackType) {
+	callback: FileHandler;
+	constructor(callback: FileHandler) {
 		this.callback = callback;
 	}
 	process(name: string, stream: Readable, info: FileInfo) {
