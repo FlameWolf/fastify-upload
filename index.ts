@@ -48,13 +48,13 @@ const tryParse = (value: string) => {
 const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	const { limits, storage = new StreamStorage() } = options;
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
-		const results: Array<Promise<File>> = [];
+		const results: Array<File | Promise<File>> = [];
 		const body: Dictionary = {};
 		const props = (request.context as Dictionary).schema?.body?.properties;
 		const parseField: FieldParser = props ? (name, value) => (props[name]?.type === "string" ? value : tryParse(value)) : (name, value) => value;
 		const bus = busboy({ headers: message.headers, limits });
 		bus.on("file", (name: string, stream: Readable, info: busboy.FileInfo) => {
-			results.push(Promise.resolve(storage.process(name, stream, info)));
+			results.push(storage.process(name, stream, info));
 			body[name] = JSON.stringify(info);
 		});
 		bus.on("field", (name, value) => {
