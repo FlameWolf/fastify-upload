@@ -12,6 +12,7 @@ export class FileInternal implements File {
 	path: string | undefined;
 	stream: Readable | undefined;
 	data: Buffer | undefined;
+	error: Error | undefined;
 	constructor(name: string, info: FileInfo) {
 		this.field = name;
 		this.originalName = info.filename;

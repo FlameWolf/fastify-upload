@@ -60,12 +60,10 @@ server.get("/", async (request, reply) => {
 });
 server.register(formDataParser, {
 	storage: new CallbackStorage((name, stream, info) => {
-		return new Promise((resolve, reject) => {
+		return new Promise(resolve => {
 			const file = new FileInternal(name, info);
 			var uploader = cloudinary.v2.uploader.upload_stream((err, res) => {
-				if (err) {
-					reject(err);
-				}
+				file.error = err;
 				file.path = res?.secure_url;
 				resolve(file);
 			});

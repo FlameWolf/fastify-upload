@@ -17,6 +17,7 @@ export interface File {
 	path: string | undefined;
 	stream: Readable | undefined;
 	data: Buffer | undefined;
+	error: Error | undefined;
 }
 export type FileHandler = (name: string, stream: Readable, info: FileInfo) => File | Promise<File>;
 export interface StorageOption {
@@ -26,6 +27,7 @@ export interface FileSaveTarget {
 	directory?: string;
 	fileName?: string;
 }
+export type TargetType = FileSaveTarget | ((source: File) => FileSaveTarget);
 export interface FormDataParserPluginOptions extends FastifyPluginOptions {
 	limits?: Limits;
 	storage?: StorageOption;
