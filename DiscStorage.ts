@@ -20,12 +20,12 @@ export class DiscStorage implements StorageOption {
 		const filePath = path.join(saveLocation?.directory || os.tmpdir(), saveLocation?.fileName || file.originalName);
 		const fileStream = fs.createWriteStream(filePath);
 		stream.pipe(fileStream);
-		return new Promise<File>(resolve => {
+		return new Promise<File>(resolve =>
 			finished(stream, err => {
 				file.error = err as Error;
 				file.path = filePath;
 				resolve(file);
-			});
-		});
+			})
+		);
 	}
 }

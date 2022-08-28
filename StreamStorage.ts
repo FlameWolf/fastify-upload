@@ -10,12 +10,12 @@ export class StreamStorage implements StorageOption {
 		const file = new FileInternal(name, info);
 		const delegateStream = new PassThrough();
 		stream.on("data", chunk => delegateStream.push(chunk));
-		return new Promise<File>(resolve => {
+		return new Promise<File>(resolve =>
 			finished(stream, err => {
 				file.error = err as Error;
 				file.stream = delegateStream;
 				resolve(file);
-			});
-		});
+			})
+		);
 	}
 }
