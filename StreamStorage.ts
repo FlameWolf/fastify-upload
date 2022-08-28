@@ -7,10 +7,10 @@ import { FileInternal } from "./FileInternal";
 
 export class StreamStorage implements StorageOption {
 	process(name: string, stream: Readable, info: FileInfo) {
+		const file = new FileInternal(name, info);
+		const delegateStream = new PassThrough();
+		stream.on("data", chunk => delegateStream.push(chunk));
 		return new Promise<File>(resolve => {
-			const file = new FileInternal(name, info);
-			const delegateStream = new PassThrough();
-			stream.on("data", chunk => delegateStream.push(chunk));
 			finished(stream, err => {
 				file.error = err as Error;
 				file.stream = delegateStream;

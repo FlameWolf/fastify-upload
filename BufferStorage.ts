@@ -7,10 +7,10 @@ import { FileInternal } from "./FileInternal";
 
 export class BufferStorage implements StorageOption {
 	process(name: string, stream: Readable, info: FileInfo) {
+		const file = new FileInternal(name, info);
+		const data: Array<Uint8Array> = [];
+		stream.on("data", chunk => data.push(chunk));
 		return new Promise<File>(resolve => {
-			const file = new FileInternal(name, info);
-			const data: Array<Uint8Array> = [];
-			stream.on("data", chunk => data.push(chunk));
 			finished(stream, err => {
 				file.error = err as Error;
 				file.data = Buffer.concat(data);
