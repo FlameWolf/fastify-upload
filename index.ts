@@ -73,7 +73,7 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 		});
 		message.pipe(bus);
 	});
-	instance.addHook("preHandler", async (request, reply) => {
+	instance.addHook("preHandler", async request => {
 		const body = request.body as Dictionary;
 		const files = request.__files__ as Array<File>;
 		if (files?.length) {
