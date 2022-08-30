@@ -1,6 +1,6 @@
 "use strict";
 
-import { Readable } from "stream";
+import { Readable, finished } from "stream";
 import { FileInfo, Limits } from "busboy";
 import { FastifyPluginOptions, FastifyPluginAsync } from "fastify";
 import { StreamStorage } from "./StreamStorage";
@@ -62,16 +62,13 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 		bus.on("field", (name, value) => {
 			body[name] = parseField(name, value);
 		});
-		bus.on("close", () => {
+		message.pipe(bus);
+		finished(bus, (err = null) => {
 			Promise.all(results).then(files => {
 				request.__files__ = files;
-				done(null, body);
+				done(err as Error, body);
 			});
 		});
-		bus.on("error", (error: Error) => {
-			done(error);
-		});
-		message.pipe(bus);
 	});
 	instance.addHook("preHandler", async request => {
 		const body = request.body as Dictionary;
