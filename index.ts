@@ -74,10 +74,10 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 		const body = request.body as Dictionary;
 		const files = request.__files__ as Array<File>;
 		if (files?.length) {
-			for (const fileObject of files) {
-				const field = fileObject.field as string;
-				delete fileObject.field;
-				body[field] = fileObject;
+			for (const file of files) {
+				const field = file.field as string;
+				delete file.field;
+				body[field] = file;
 			}
 		}
 		delete request.__files__;
