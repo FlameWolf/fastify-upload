@@ -37,6 +37,7 @@ type FieldParser = (name: string, value: string) => string;
 declare module "fastify" {
 	interface FastifyRequest {
 		__files__?: Array<File>;
+		routeSchema: Dictionary | undefined;
 	}
 }
 
@@ -52,7 +53,7 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
 		const results: Array<File | Promise<File>> = [];
 		const body: Dictionary = {};
-		const props = (request.context as Dictionary).schema?.body?.properties;
+		const props = request.routeSchema?.body?.properties;
 		const parseField: FieldParser = props ? (name, value) => (props[name]?.type === "string" ? value : tryParse(value)) : (name, value) => value;
 		const bus = busboy({ headers: message.headers, limits });
 		bus.on("file", (name: string, stream: Readable, info: busboy.FileInfo) => {
