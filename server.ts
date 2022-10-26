@@ -2,6 +2,7 @@
 
 import fastify, { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions } from "fastify";
 import fastifySwagger from "@fastify/swagger";
+import fastifySwaggerUi from "@fastify/swagger-ui";
 import formDataParser from "./index";
 import cloudinary = require("cloudinary");
 import { FileInternal } from "./FileInternal";
@@ -45,14 +46,15 @@ const postCreateSchema = {
 const server: FastifyInstance = fastify({ logger: true });
 if (!isProdEnv) {
 	server.register(fastifySwagger, {
-		routePrefix: "/swagger",
-		exposeRoute: true,
 		openapi: {
 			info: {
 				title: "Fastify Upload",
 				version: "1.0.0"
 			}
 		}
+	});
+	server.register(fastifySwaggerUi, {
+		routePrefix: "/swagger"
 	});
 }
 server.get("/", async (request, reply) => {
