@@ -52,7 +52,7 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
 		const results: Array<File | Promise<File>> = [];
 		const body: Dictionary = {};
-		const props = (request.routeSchema?.body as any)?.properties;
+		const props = (request.routeOptions.schema?.body as any)?.properties;
 		const parseField: FieldParser = props ? (name, value) => (props[name]?.type === "string" ? value : tryParse(value)) : (name, value) => value;
 		const bus = busboy({ headers: message.headers, limits });
 		bus.on("file", (name: string, stream: Readable, info: busboy.FileInfo) => {

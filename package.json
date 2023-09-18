@@ -11,17 +11,17 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"@fastify/static": "^6.11.0",
+		"@fastify/static": "^6.11.2",
 		"@fastify/swagger-ui": "^1.9.3",
 		"busboy": "^1.6.0",
 		"cloudinary": "^1.40.0",
-		"fastify": "^4.23.0"
+		"fastify": "^4.23.2"
 	},
 	"devDependencies": {
 		"@fastify/swagger": "^8.10.0",
-		"@types/babel__core": "^7.20.1",
-		"@types/busboy": "^1.5.0",
-		"@types/node": "^20.6.0",
+		"@types/babel__core": "^7.20.2",
+		"@types/busboy": "^1.5.1",
+		"@types/node": "^20.6.2",
 		"@types/nodemon": "^1.19.2",
 		"dotenv": "^16.3.1",
 		"nodemon": "^3.0.1",
