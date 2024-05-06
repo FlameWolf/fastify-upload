@@ -1,16 +1,18 @@
 import { Dictionary } from "./index";
 
 export class FieldParser {
-	props: Dictionary;
+	#props: Dictionary;
 	constructor(props: Dictionary) {
-		this.props = props;
+		this.#props = props;
 	}
 	parseField(name: string, value: any) {
-		if (this.props) {
-			if (this.props[name]?.type !== "string") {
+		if (this.#props) {
+			if (this.#props[name]?.type !== "string") {
 				try {
 					return JSON.parse(value);
-				} catch {}
+				} catch {
+					void 0;
+				}
 			}
 		}
 		return value;
