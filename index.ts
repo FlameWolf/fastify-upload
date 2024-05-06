@@ -4,8 +4,9 @@ import { Readable, finished } from "stream";
 import { FileInfo, Limits } from "busboy";
 import { FastifyPluginOptions, FastifyPluginAsync } from "fastify";
 import { StreamStorage } from "./StreamStorage";
+import { FieldParserWithSchema } from "./FieldParserWithSchema";
+import { FieldParserNoSchema } from "./FieldParserNoSchema";
 import * as busboy from "busboy";
-import { FieldParser } from "./FieldParser";
 
 export interface Dictionary extends Object {
 	[key: string | symbol]: any;
@@ -34,6 +35,9 @@ export interface FormDataParserPluginOptions extends FastifyPluginOptions {
 	storage?: StorageOption;
 }
 export type FormDataParserPlugin = FastifyPluginAsync<FormDataParserPluginOptions> & Dictionary;
+export interface FieldParser {
+	parseField(name: string, value: any): any;
+}
 declare module "fastify" {
 	interface FastifyRequest {
 		__files__?: Array<File>;
@@ -45,7 +49,8 @@ const formDataParser: FormDataParserPlugin = async (instance, options) => {
 	instance.addContentTypeParser("multipart/form-data", (request, message, done) => {
 		const results: Array<File | Promise<File>> = [];
 		const body = new Map();
-		const parser = new FieldParser((request.routeOptions.schema?.body as any)?.properties);
+		const props = (request.routeOptions.schema?.body as any)?.properties;
+		const parser = props ? new FieldParserWithSchema(props) : new FieldParserNoSchema();
 		const bus = busboy({ headers: message.headers, limits });
 		bus.on("file", (name, stream, info) => {
 			results.push(storage.process(name, stream, info));
