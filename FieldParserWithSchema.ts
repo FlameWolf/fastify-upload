@@ -1,14 +1,12 @@
 import { Dictionary, FieldParser } from "./index";
 
 export class FieldParserWithSchema implements FieldParser {
-	#props: Dictionary;
-
+	private props: Dictionary;
 	constructor(props: Dictionary) {
-		this.#props = props;
+		this.props = props;
 	}
-
 	parseField(name: string, value: any) {
-		if (this.#props[name]?.type !== "string") {
+		if (this.props[name]?.type !== "string") {
 			try {
 				return JSON.parse(value);
 			} catch {

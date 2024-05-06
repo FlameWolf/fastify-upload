@@ -9,12 +9,12 @@ import * as os from "os";
 import * as fs from "fs";
 
 export class DiscStorage implements StorageOption {
-	#target: TargetType;
+	private target: TargetType;
 	constructor(target: TargetType) {
-		this.#target = target;
+		this.target = target;
 	}
 	process(name: string, stream: Readable, info: FileInfo) {
-		const target = this.#target;
+		const target = this.target;
 		const file = new FileInternal(name, info);
 		const saveLocation = typeof target === "function" ? target(file) : target;
 		const filePath = path.join(saveLocation?.directory || os.tmpdir(), saveLocation?.fileName || file.originalName);
