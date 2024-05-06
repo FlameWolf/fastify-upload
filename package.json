@@ -11,21 +11,21 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"@fastify/static": "^6.11.2",
-		"@fastify/swagger-ui": "^1.9.3",
+		"@fastify/static": "^7.0.3",
+		"@fastify/swagger-ui": "^3.0.0",
 		"busboy": "^1.6.0",
-		"cloudinary": "^1.40.0",
-		"fastify": "^4.23.2"
+		"cloudinary": "^2.2.0",
+		"fastify": "^4.26.2"
 	},
 	"devDependencies": {
-		"@fastify/swagger": "^8.10.0",
-		"@types/babel__core": "^7.20.2",
-		"@types/busboy": "^1.5.1",
-		"@types/node": "^20.6.2",
-		"@types/nodemon": "^1.19.2",
-		"dotenv": "^16.3.1",
-		"nodemon": "^3.0.1",
-		"ts-node": "^10.9.1",
-		"typescript": "^5.2.2"
+		"@fastify/swagger": "^8.14.0",
+		"@types/babel__core": "^7.20.5",
+		"@types/busboy": "^1.5.4",
+		"@types/node": "^20.12.8",
+		"@types/nodemon": "^1.19.6",
+		"dotenv": "^16.4.5",
+		"nodemon": "^3.1.0",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.4.5"
 	}
 }
